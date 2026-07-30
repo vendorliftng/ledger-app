@@ -1,5 +1,5 @@
 /**
- * functions/api/index.js
+ * functions/api.js
  * Cloudflare Pages Function — sits between the browser and the Apps Script
  * backend. Two jobs:
  *   1. The browser talks to this (same origin as the site, so no CORS
@@ -10,6 +10,9 @@
  *      only ever lives in the APPS_SCRIPT_URL environment variable,
  *      configured in the Cloudflare Pages dashboard (Settings ->
  *      Environment variables), never committed to this repo.
+ *
+ * File is named api.js (not api/index.js) on purpose — that maps
+ * unambiguously to the /api route.
  */
 
 export async function onRequestPost(context) {
