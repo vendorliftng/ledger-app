@@ -1,0 +1,10 @@
+{
+  "name": "ledger-app",
+  "compatibility_date": "2026-07-01",
+  // This is what turns this into a Pages-style project instead of a plain
+  // static-assets Worker: "public" is served as the site, and everything
+  // under functions/ runs as server code (like functions/api.js) — which is
+  // also what unlocks Environment Variables in Settings, since a
+  // static-only Worker has nowhere to run code that would use them.
+  "pages_build_output_dir": "public"
+}
