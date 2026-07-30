@@ -18,17 +18,15 @@ folder, not in this repo.
   directly (avoids cross-origin issues, keeps the raw Apps Script URL out
   of the public site)
 
-## One required setting
+## Backend URL
 
-In the Cloudflare dashboard (not in this repo): project → **Settings →
-Variables and secrets**, add:
-
-```
-APPS_SCRIPT_URL = https://script.google.com/macros/s/.../exec
-```
-
-Without this, `/api` replies with a "Server misconfigured" message instead
-of reaching the Sheet.
+`APPS_SCRIPT_URL` is set directly in `wrangler.toml` under `[vars]` — the
+Cloudflare dashboard's own "Variables and secrets" UI didn't reliably
+attach to the Worker's runtime for this project (tried Plaintext, Secret,
+and the Bindings panel — none of it stuck across a redeploy), so the file
+is the actual source of truth here. It's not a password: the real
+protection is the PIN-login/session system in the backend itself, not
+keeping this address hidden.
 
 ## Local development
 
@@ -40,6 +38,9 @@ npx wrangler dev
 
 ## Status
 
-Phase 2 of the migration plan: proving the browser → Worker → Apps Script →
-Sheet round trip works. `public/index.html` is a placeholder that checks
-this connection on load — the real app screens land in Phase 3.
+Phase 3 of the migration plan: the real screens are in — login, the
+dashboard, and all six field-capture forms (Stock In, Load Out, Sale,
+Return, Cash, Crates) plus Reconciliation, all talking to `/api` instead of
+`google.script.run`. Still to come: the three screens that don't exist yet
+anywhere (edit history, audit log, user management), then the PWA/offline
+work (Phases 4–5).

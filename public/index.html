@@ -2,77 +2,167 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#0A6E7E">
 <title>Ledger</title>
-<style>
-  :root {
-    --frost: #EDF2F4; --ice: #FFFFFF; --ink: #10202A; --steel: #5C7382;
-    --chill: #0A6E7E; --chill-wash: #E3F1F3;
-    --clear: #17703F; --clear-wash: #E5F4EC;
-    --short: #A3221A; --short-wash: #FBE9E7;
-    --rule: #C9D6DC;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --frost: #0B161C; --ice: #142530; --ink: #EAF2F5; --steel: #90A7B3;
-      --chill: #3FBFD1; --chill-wash: #17323A;
-      --clear: #57CE95; --clear-wash: #12301F;
-      --short: #FF8C7A; --short-wash: #331612;
-      --rule: #28414C;
-    }
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    background: var(--frost); color: var(--ink);
-    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-    padding: 24px;
-  }
-  .card {
-    background: var(--ice); border: 1px solid var(--rule); border-radius: 12px;
-    padding: 32px 28px; max-width: 420px; width: 100%; text-align: center;
-    box-shadow: 0 8px 24px rgba(16,32,42,.08);
-  }
-  h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; }
-  p.sub { margin: 0 0 22px; color: var(--steel); font-size: 14px; }
-  .status {
-    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-    font-size: 13.5px; padding: 12px 14px; border-radius: 8px; text-align: left;
-    background: var(--rule); color: var(--steel);
-  }
-  .status.ok { background: var(--clear-wash); color: var(--clear); }
-  .status.bad { background: var(--short-wash); color: var(--short); }
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="card">
-    <h1>Ledger</h1>
-    <p class="sub">This site is deployed. The real app screens aren't built here yet — this page only proves the connection to the backend works.</p>
-    <div class="status" id="status">Checking backend connection…</div>
+
+<!-- ── LOGIN ─────────────────────────────────────────────── -->
+<div id="login" class="login">
+  <div class="mark">Ledger</div>
+  <div class="sub">STOCK &amp; ROUTE CONTROL</div>
+  <input id="pin" type="tel" inputmode="numeric" maxlength="4" placeholder="••••" aria-label="Enter your PIN">
+  <button id="loginBtn">Sign in</button>
+  <div id="loginErr" class="err"></div>
+</div>
+
+<!-- ── APP ───────────────────────────────────────────────── -->
+<div id="app" style="display:none">
+  <div class="topbar">
+    <div class="brand">Ledger</div>
+    <div class="who">
+      <span id="uName"></span><br><span id="uRole"></span>
+      <button class="signout" onclick="doLogout()">Sign out</button>
+    </div>
   </div>
 
-  <script>
-    fetch('/api', {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ fn: 'login', payload: { pin: '0000' } })
-    })
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
-        var el = document.getElementById('status');
-        if (data && typeof data.ok === 'boolean') {
-          el.className = 'status ok';
-          el.textContent = 'Backend connected. (Response: ' + JSON.stringify(data) + ')';
-        } else {
-          el.className = 'status bad';
-          el.textContent = 'Backend replied, but not in the expected shape: ' + JSON.stringify(data);
-        }
-      })
-      .catch(function (err) {
-        var el = document.getElementById('status');
-        el.className = 'status bad';
-        el.textContent = 'Could not reach the backend: ' + err.message;
-      });
-  </script>
+  <div class="wrap">
+
+    <!-- HOME -->
+    <section id="s-home" class="screen on">
+      <div class="eyebrow" id="todayLabel">Today</div>
+      <h1 style="margin:2px 0 14px">Position</h1>
+
+      <div class="stats">
+        <div class="stat"><div class="k">Sales today</div><div class="v" id="mSales">—</div></div>
+        <div class="stat"><div class="k">Cash in</div><div class="v" id="mCash">—</div></div>
+        <div class="stat"><div class="k">On credit</div><div class="v" id="mCredit">—</div></div>
+        <div class="stat warn"><div class="k">Expiring</div><div class="v" id="mExp">—</div></div>
+      </div>
+
+      <div class="eyebrow" style="margin:22px 0 8px">Record</div>
+      <div class="tiles" id="tiles"></div>
+
+      <div id="reconHome"></div>
+    </section>
+
+    <!-- STOCK IN -->
+    <section id="s-stockin" class="screen">
+      <button class="back" onclick="go('home')">← Back</button>
+      <h2>Receive into cold room</h2>
+      <div class="card">
+        <label><span class="lbl">Date</span><input type="date" id="si_date"></label>
+        <label><span class="lbl">Product</span><select id="si_sku"></select></label>
+        <label><span class="lbl">Batch number</span><input id="si_batch" placeholder="B-1180"></label>
+        <label><span class="lbl">Quantity</span><input type="number" inputmode="numeric" id="si_qty" min="1"></label>
+        <label><span class="lbl">Production date</span><input type="date" id="si_prod"></label>
+        <label><span class="lbl">Expiry date</span><input type="date" id="si_exp"></label>
+        <label><span class="lbl">Unit cost</span><input type="number" inputmode="decimal" id="si_cost"></label>
+        <label><span class="lbl">Source</span><input id="si_src" value="Production"></label>
+        <button onclick="submit('submitStockIn', collectStockIn)">Record receipt</button>
+      </div>
+    </section>
+
+    <!-- LOAD OUT -->
+    <section id="s-loadout" class="screen">
+      <button class="back" onclick="go('home')">← Back</button>
+      <h2>Issue to marketer</h2>
+      <div class="card">
+        <label><span class="lbl">Date</span><input type="date" id="lo_date"></label>
+        <label><span class="lbl">Marketer</span><select id="lo_mkt"></select></label>
+        <label><span class="lbl">Destination</span><select id="lo_dest"></select></label>
+        <label><span class="lbl">Product</span><select id="lo_sku"></select></label>
+        <label><span class="lbl">Batch</span><select id="lo_batch"></select></label>
+        <label><span class="lbl">Quantity</span><input type="number" inputmode="numeric" id="lo_qty" min="1"></label>
+        <label><span class="lbl">Crates out</span><input type="number" inputmode="numeric" id="lo_crates" value="0"></label>
+        <button onclick="submit('submitLoadOut', collectLoadOut)">Issue stock</button>
+      </div>
+    </section>
+
+    <!-- SALE -->
+    <section id="s-sale" class="screen">
+      <button class="back" onclick="go('home')">← Back</button>
+      <h2>Record sale</h2>
+      <div class="card">
+        <label><span class="lbl">Date</span><input type="date" id="sa_date"></label>
+        <label id="sa_mktWrap"><span class="lbl">Marketer</span><select id="sa_mkt"></select></label>
+        <label><span class="lbl">Location</span><select id="sa_loc"></select></label>
+        <label><span class="lbl">Customer</span><input id="sa_cust" placeholder="Shop or trader name"></label>
+        <label><span class="lbl">Product</span><select id="sa_sku"></select></label>
+        <label><span class="lbl">Quantity</span><input type="number" inputmode="numeric" id="sa_qty" min="1"></label>
+        <label><span class="lbl">Unit price</span><input type="number" inputmode="decimal" id="sa_price"></label>
+        <label><span class="lbl">Payment</span><select id="sa_pay">
+          <option>Cash</option><option>Transfer</option><option>Credit</option><option>Part Payment</option>
+        </select></label>
+        <div class="stat" style="margin-top:14px"><div class="k">Amount</div><div class="v" id="sa_total">0</div></div>
+        <button onclick="submit('submitSale', collectSale)">Record sale</button>
+      </div>
+    </section>
+
+    <!-- RETURN -->
+    <section id="s-return" class="screen">
+      <button class="back" onclick="go('home')">← Back</button>
+      <h2>Record return</h2>
+      <div class="card">
+        <label><span class="lbl">Date</span><input type="date" id="rt_date"></label>
+        <label id="rt_mktWrap"><span class="lbl">Marketer</span><select id="rt_mkt"></select></label>
+        <label><span class="lbl">Product</span><select id="rt_sku"></select></label>
+        <label><span class="lbl">Batch</span><select id="rt_batch"></select></label>
+        <label><span class="lbl">Quantity</span><input type="number" inputmode="numeric" id="rt_qty" min="1"></label>
+        <label><span class="lbl">Reason</span><select id="rt_reason">
+          <option>Unsold</option><option>Damaged</option><option>Expired</option>
+          <option>Wrong Item</option><option>Customer Rejected</option>
+        </select></label>
+        <label><span class="lbl">Condition</span><select id="rt_cond">
+          <option>Good - Restock</option><option>Pending Write-Off</option>
+        </select></label>
+        <button onclick="submit('submitReturn', collectReturn)">Record return</button>
+      </div>
+    </section>
+
+    <!-- CASH -->
+    <section id="s-cash" class="screen">
+      <button class="back" onclick="go('home')">← Back</button>
+      <h2>Remit cash</h2>
+      <div class="card">
+        <label><span class="lbl">Date</span><input type="date" id="ca_date"></label>
+        <label id="ca_mktWrap"><span class="lbl">Marketer</span><select id="ca_mkt"></select></label>
+        <label><span class="lbl">Amount</span><input type="number" inputmode="decimal" id="ca_amt"></label>
+        <label><span class="lbl">Note</span><input id="ca_note" placeholder="Full / part payment"></label>
+        <button onclick="submit('submitCash', collectCash)">Record remittance</button>
+      </div>
+    </section>
+
+    <!-- CRATES -->
+    <section id="s-crates" class="screen">
+      <button class="back" onclick="go('home')">← Back</button>
+      <h2>Crates</h2>
+      <div class="card">
+        <label><span class="lbl">Date</span><input type="date" id="cr_date"></label>
+        <label id="cr_mktWrap"><span class="lbl">Marketer</span><select id="cr_mkt"></select></label>
+        <label><span class="lbl">Location</span><select id="cr_loc"></select></label>
+        <label><span class="lbl">Crates out</span><input type="number" inputmode="numeric" id="cr_out" value="0"></label>
+        <label><span class="lbl">Crates returned</span><input type="number" inputmode="numeric" id="cr_back" value="0"></label>
+        <button onclick="submit('submitCrates', collectCrates)">Record crates</button>
+      </div>
+    </section>
+
+    <!-- RECONCILIATION -->
+    <section id="s-recon" class="screen">
+      <button class="back" onclick="go('home')">← Back</button>
+      <h2>Reconciliation</h2>
+      <div class="eyebrow" style="margin:6px 0 14px">Issued vs sold vs returned vs cash</div>
+      <div id="reconList"></div>
+      <button id="saveRecon" onclick="doSaveRecon()">Save today's reconciliation</button>
+    </section>
+
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="app.js"></script>
 </body>
 </html>
