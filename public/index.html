@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ledger</title>
+<style>
+  :root {
+    --frost: #EDF2F4; --ice: #FFFFFF; --ink: #10202A; --steel: #5C7382;
+    --chill: #0A6E7E; --chill-wash: #E3F1F3;
+    --clear: #17703F; --clear-wash: #E5F4EC;
+    --short: #A3221A; --short-wash: #FBE9E7;
+    --rule: #C9D6DC;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --frost: #0B161C; --ice: #142530; --ink: #EAF2F5; --steel: #90A7B3;
+      --chill: #3FBFD1; --chill-wash: #17323A;
+      --clear: #57CE95; --clear-wash: #12301F;
+      --short: #FF8C7A; --short-wash: #331612;
+      --rule: #28414C;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: var(--frost); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    padding: 24px;
+  }
+  .card {
+    background: var(--ice); border: 1px solid var(--rule); border-radius: 12px;
+    padding: 32px 28px; max-width: 420px; width: 100%; text-align: center;
+    box-shadow: 0 8px 24px rgba(16,32,42,.08);
+  }
+  h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; }
+  p.sub { margin: 0 0 22px; color: var(--steel); font-size: 14px; }
+  .status {
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+    font-size: 13.5px; padding: 12px 14px; border-radius: 8px; text-align: left;
+    background: var(--rule); color: var(--steel);
+  }
+  .status.ok { background: var(--clear-wash); color: var(--clear); }
+  .status.bad { background: var(--short-wash); color: var(--short); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Ledger</h1>
+    <p class="sub">This site is deployed. The real app screens aren't built here yet — this page only proves the connection to the backend works.</p>
+    <div class="status" id="status">Checking backend connection…</div>
+  </div>
+
+  <script>
+    fetch('/api', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ fn: 'login', payload: { pin: '0000' } })
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        var el = document.getElementById('status');
+        if (data && typeof data.ok === 'boolean') {
+          el.className = 'status ok';
+          el.textContent = 'Backend connected. (Response: ' + JSON.stringify(data) + ')';
+        } else {
+          el.className = 'status bad';
+          el.textContent = 'Backend replied, but not in the expected shape: ' + JSON.stringify(data);
+        }
+      })
+      .catch(function (err) {
+        var el = document.getElementById('status');
+        el.className = 'status bad';
+        el.textContent = 'Could not reach the backend: ' + err.message;
+      });
+  </script>
+</body>
+</html>
