@@ -12,7 +12,7 @@ folder, not in this repo.
 - **Source:** this GitHub repo
 - **Hosting:** a Cloudflare Worker, connected directly to this repo — every
   push to `main` deploys automatically (`npx wrangler deploy`, configured
-  by `wrangler.jsonc`)
+  by `wrangler.toml`)
 - **Backend:** a Google Apps Script Web App (the Sheet + script), reached
   through `src/worker.js`'s `/api` route so the browser never talks to it
   directly (avoids cross-origin issues, keeps the raw Apps Script URL out
