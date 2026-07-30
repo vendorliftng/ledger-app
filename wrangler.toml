@@ -5,3 +5,10 @@ main = "src/worker.js"
 [assets]
 directory = "public"
 binding = "ASSETS"
+
+[vars]
+# Not a secret — protection here comes from the PIN-login/session system in
+# the backend itself, not from hiding this address. Declaring it directly
+# here (rather than via the dashboard) is what actually survives every
+# `wrangler deploy` from this repo, which dashboard-only values didn't.
+APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxS8f7zNRgNokrKdSRKj6vFjITlxefZnkXCY6bGRnu45cWlfQUnZDUgg87Va5VrsGJmTw/exec"
