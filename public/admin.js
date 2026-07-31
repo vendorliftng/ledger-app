@@ -18,6 +18,18 @@ function doAdminLogout() {
   window.location.href = 'index.html';
 }
 
+/* ── Mobile sidebar drawer ─────────────────────────────────── */
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarBackdrop').classList.add('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('open');
+}
+document.getElementById('menuToggle').addEventListener('click', openSidebar);
+document.getElementById('sidebarBackdrop').addEventListener('click', closeSidebar);
+
 function loadAdmin() {
   apiCall('getBootstrap', TOKEN, {})
     .then(function (d) {
@@ -46,6 +58,7 @@ function buildSidebar() {
     a.addEventListener('click', function (e) {
       e.preventDefault();
       navigateTo(a.getAttribute('data-key'), DATA);
+      closeSidebar(); // no-op on desktop where it was never "open"
     });
   });
 }

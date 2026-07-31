@@ -1,9 +1,13 @@
 /* ─────────────────────────────────────────────────────────────
    LEDGER ADMIN — same instrument-panel identity as the mobile app
    (frost/ice/chill palette, Barlow Condensed + IBM Plex Mono,
-   monospace for codes/quantities), restructured for a desk, not a
-   cold room: sidebar, top bar, data-dense tables. Desktop/laptop
-   only (~1280px+) — phones are the mobile app's job by design.
+   monospace for codes/quantities), restructured for a desk: sidebar,
+   top bar, data-dense tables. Built for desktop/laptop first, but a
+   Manager or Owner needing to check something urgently from a phone
+   shouldn't be locked out — see the mobile breakpoint at the bottom
+   of this file. It's a fallback for "quickly verify/approve/add
+   something away from the desk," not a rebuild of the dense-table
+   experience for small screens.
    Loads after styles.css and reuses its :root tokens verbatim.
    ───────────────────────────────────────────────────────────── */
 
@@ -80,6 +84,14 @@ body { padding-bottom: 0; } /* undo the mobile app's fixed-toast bottom padding 
 }
 .admin-topbar h1 { font-size: 20px; }
 .topbar-date { font-family: var(--data); font-size: 12.5px; color: var(--steel); }
+
+.menu-toggle {
+  display: none; /* shown only under the mobile breakpoint, below */
+  width: 40px; min-height: 40px; margin: 0; padding: 0; flex-shrink: 0;
+  background: none; border: 1.5px solid var(--rule); border-radius: 4px;
+  color: var(--ink); font-size: 18px; line-height: 1; cursor: pointer;
+}
+.sidebar-backdrop { display: none; }
 
 .admin-content {
   flex: 1; padding: var(--admin-pad); max-width: var(--content-max); width: 100%;
@@ -183,4 +195,47 @@ input[type="checkbox"] {
   min-height: auto;
   padding: 0;
   accent-color: var(--chill);
+}
+
+/* ── Mobile: sidebar becomes a slide-in drawer, everything stacks to one
+   column. Goal is "usable in a pinch from a phone," not a full redesign —
+   dense tables still scroll sideways inside .table-wrap rather than
+   reflowing, which is the honest trade-off for keeping every column
+   visible instead of hiding data on a small screen. ───────────────────── */
+@media (max-width: 900px) {
+  .menu-toggle { display: inline-flex; align-items: center; justify-content: center; }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0; z-index: 50;
+    transform: translateX(-100%);
+    transition: transform .18s ease;
+    box-shadow: 4px 0 24px rgba(12,26,33,.35);
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  .sidebar-backdrop {
+    display: none;
+    position: fixed; inset: 0; z-index: 45;
+    background: rgba(12,26,33,.5);
+  }
+  .sidebar-backdrop.open { display: block; }
+
+  .admin-topbar { padding: 0 14px; gap: 12px; }
+  .admin-topbar h1 { font-size: 17px; flex: 1; }
+  .topbar-date { display: none; } /* a phone glance doesn't need the date repeated */
+
+  .admin-content { padding: 14px; }
+
+  .kpi-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi-row .stat { padding: 10px 12px; }
+  .kpi-row .stat .v { font-size: 20px; }
+
+  .gauge-grid, .chart-grid { grid-template-columns: 1fr; }
+
+  .screen-head { flex-direction: column; align-items: stretch; }
+  .toolbar input[type="search"] { min-width: 0; flex: 1 1 100%; }
+  .toolbar select { flex: 1 1 auto; }
+
+  .modal-overlay { padding: 12px; align-items: flex-end; }
+  .modal-panel { padding: 20px 18px; max-height: calc(100vh - 24px); }
 }

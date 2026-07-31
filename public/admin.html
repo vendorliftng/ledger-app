@@ -11,7 +11,9 @@
 <body>
 
 <div class="admin-shell">
-  <aside class="sidebar">
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">Ledger</div>
     <nav class="sidebar-nav" id="sidebarNav"></nav>
     <div class="sidebar-foot">
@@ -25,6 +27,7 @@
 
   <div class="admin-main">
     <header class="admin-topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">&#9776;</button>
       <h1 id="screenTitle">Overview</h1>
       <div class="topbar-date" id="screenDate"></div>
     </header>
