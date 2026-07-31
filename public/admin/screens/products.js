@@ -47,7 +47,18 @@
       csvFilename: 'products.csv',
       onRowClick: canWrite ? function (r) { openProductModal(container, r, showCost); } : null,
       onAdd: canWrite ? function () { openProductModal(container, null, showCost); } : null,
-      addLabel: 'Add product'
+      addLabel: 'Add product',
+      onToggleActive: canWrite ? function (row, btn) {
+        // getProducts_'s field names match saveProduct_'s payload shape
+        // exactly, so the existing row can be resubmitted as-is with just
+        // 'active' flipped. Cost stays whatever the row has (blank for
+        // Manager) — the backend already ignores a Manager's cost value
+        // and keeps what's on record, so this can't accidentally wipe it.
+        return handleActiveToggle(row, btn, function (newActive) {
+          var payload = Object.assign({}, row, { active: newActive });
+          return apiCall('saveProduct', TOKEN, payload);
+        }, function () { initProducts(container); });
+      } : null
     });
   }
 

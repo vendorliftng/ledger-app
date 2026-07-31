@@ -9,7 +9,12 @@
      filters: [{ key, label, options: [...] }],
      onRowClick?(row),
      onAdd?(), addLabel?: 'Add marketer',
-     csvFilename?: 'marketers.csv'
+     csvFilename?: 'marketers.csv',
+     onToggleActive?(row, buttonEl)  // if set, the 'active' column becomes a
+                                      // one-click Active/Inactive button —
+                                      // matches how a checkbox column feels
+                                      // on the Sheet, no modal needed just to
+                                      // flip a status
    })
 */
 
@@ -105,10 +110,16 @@ function renderDataTable(container, opts) {
       if (th.getAttribute('data-key') === state.sortKey) th.classList.add(state.sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
     });
 
-    bodyEl.innerHTML = rows.length ? rows.map(function (r) {
+    bodyEl.innerHTML = rows.length ? rows.map(function (r, i) {
       var cells = opts.columns.map(function (c) {
         var val = r[c.key];
-        var display = c.render ? c.render(val, r) : escapeHtml(val);
+        var display;
+        if (c.key === 'active' && opts.onToggleActive) {
+          display = '<button type="button" class="badge-toggle badge ' + (val ? 'ok' : 'muted') + '" data-toggle-idx="' + i + '">' +
+            (val ? 'Active' : 'Inactive') + '</button>';
+        } else {
+          display = c.render ? c.render(val, r) : escapeHtml(val);
+        }
         var cls = c.type === 'num' ? 'num' : (c.type === 'code' ? 'code' : '');
         return '<td class="' + cls + '">' + display + '</td>';
       }).join('');
@@ -118,6 +129,16 @@ function renderDataTable(container, opts) {
     if (opts.onRowClick) {
       Array.prototype.forEach.call(bodyEl.querySelectorAll('tr[data-id]'), function (tr, i) {
         tr.addEventListener('click', function () { opts.onRowClick(rows[i]); });
+      });
+    }
+
+    if (opts.onToggleActive) {
+      Array.prototype.forEach.call(bodyEl.querySelectorAll('.badge-toggle'), function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation(); // don't also open the row's edit modal
+          var idx = Number(btn.getAttribute('data-toggle-idx'));
+          opts.onToggleActive(rows[idx], btn);
+        });
       });
     }
   }
@@ -137,6 +158,31 @@ function rowsToCsv(columns, rows) {
     lines.push(columns.map(function (c) { return esc(r[c.key]); }).join(','));
   });
   return lines.join('\r\n');
+}
+
+/**
+ * Common pattern behind every onToggleActive handler: flip the value,
+ * disable the button while it's in flight, submit, then either reload
+ * (success) or re-enable and leave it as-is with the server's reason
+ * (rejection — e.g. a location that's still an active parent of another).
+ */
+function handleActiveToggle(row, btn, submitFn, reloadFn) {
+  var newActive = !row.active;
+  btn.disabled = true;
+  submitFn(newActive)
+    .then(function (res) {
+      if (res && res.ok === false) {
+        toast(res.message, true);
+        btn.disabled = false;
+        return;
+      }
+      toast(newActive ? 'Marked active.' : 'Marked inactive.', false);
+      reloadFn();
+    })
+    .catch(function () {
+      toast('Could not update — check your connection.', true);
+      btn.disabled = false;
+    });
 }
 
 function downloadCsv(filename, csvText) {

@@ -47,7 +47,16 @@
       csvFilename: 'locations.csv',
       onRowClick: canWrite ? function (r) { openLocationModal(container, r, locations); } : null,
       onAdd: canWrite ? function () { openLocationModal(container, null, locations); } : null,
-      addLabel: 'Add location'
+      addLabel: 'Add location',
+      onToggleActive: canWrite ? function (row, btn) {
+        // Deactivating a location that's still an active parent of another
+        // is rejected server-side (saveLocation_) — the toggle just surfaces
+        // that message via handleActiveToggle rather than silently failing.
+        handleActiveToggle(row, btn, function (newActive) {
+          var payload = Object.assign({}, row, { active: newActive });
+          return apiCall('saveLocation', TOKEN, payload);
+        }, function () { initLocations(container); });
+      } : null
     });
   }
 

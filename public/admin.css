@@ -147,6 +147,15 @@ table.data-table td.num { text-align: right; font-variant-numeric: tabular-nums;
 .badge.warn  { background: #FBF0DD; color: var(--signal); }
 .badge.muted { background: var(--rule); color: var(--steel); }
 
+/* One-click Active/Inactive — same badge, made clickable. Matches the
+   Sheet's own instant checkbox-per-row feel instead of needing a modal. */
+.badge-toggle {
+  border: none; cursor: pointer; margin-top: 0; width: auto; min-height: auto;
+  font-family: var(--data); letter-spacing: .04em; text-transform: uppercase;
+}
+.badge-toggle:hover { filter: brightness(0.94); }
+.badge-toggle:disabled { opacity: .5; cursor: wait; }
+
 /* ── Modal (add/edit forms) ─────────────────────────────────── */
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(12,26,33,.6);

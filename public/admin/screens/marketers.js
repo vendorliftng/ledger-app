@@ -41,7 +41,14 @@
       csvFilename: 'marketers.csv',
       onRowClick: canWrite ? function (r) { openMarketerModal(container, r); } : null,
       onAdd: canWrite ? function () { openMarketerModal(container, null); } : null,
-      addLabel: 'Add marketer'
+      addLabel: 'Add marketer',
+      onToggleActive: canWrite ? function (row, btn) {
+        handleActiveToggle(row, btn, function (newActive) {
+          return apiCall('saveMarketer', TOKEN, {
+            marketerId: row.marketerId, fullName: row.name, phone: row.phone, area: row.area, role: row.role, active: newActive
+          });
+        }, function () { initMarketers(container); });
+      } : null
     });
   }
 

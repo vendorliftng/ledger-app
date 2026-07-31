@@ -44,7 +44,18 @@
       csvFilename: 'users.csv',
       onRowClick: function (r) { openUserModal(container, r, DATA); },
       onAdd: function () { openUserModal(container, null, DATA); },
-      addLabel: 'Add user'
+      addLabel: 'Add user',
+      onToggleActive: function (row, btn) {
+        // saveUser_ requires a valid 4-digit PIN in the payload even when
+        // nothing about the PIN is changing, so it has to be carried over
+        // from the row (getUsers_ does include it) — a partial payload
+        // would fail the PIN check.
+        handleActiveToggle(row, btn, function (newActive) {
+          return apiCall('saveUser', TOKEN, {
+            userId: row.userId, fullName: row.name, role: row.role, pin: row.pin, marketer: row.marketer, active: newActive
+          });
+        }, function () { initUsers(container, DATA); });
+      }
     });
   }
 
