@@ -10,9 +10,11 @@
 
 importScripts('db.js', 'outbox.js');
 
-var CACHE_NAME = 'ledger-shell-v1';
+// Bump this whenever the shell files change meaningfully — it's what forces
+// browsers holding an old, already-installed service worker to fetch fresh
+// copies instead of serving whatever they cached last time.
+var CACHE_NAME = 'ledger-shell-v2';
 var SHELL_FILES = [
-  '/',
   '/index.html',
   '/styles.css',
   '/shared.js',
@@ -44,26 +46,25 @@ self.addEventListener('activate', function (event) {
 });
 
 self.addEventListener('fetch', function (event) {
-  var url = new URL(event.request.url);
+  var req = event.request;
+  var url = new URL(req.url);
 
   if (url.pathname === '/api') return; // never intercept — network-only, no exceptions
-  if (event.request.method !== 'GET') return;
+  if (req.method !== 'GET') return;
   if (url.origin !== self.location.origin) return;
 
+  // Every shell file is already saved during install (below), so this is
+  // deliberately simple: serve the precached copy if there is one, else go
+  // to the network. No runtime re-caching here — writing a live response
+  // back into the cache on every request (including full-page navigations)
+  // is a known source of hard-to-diagnose failures in some browsers, and
+  // isn't needed since the shell is already covered by install-time caching.
   event.respondWith(
-    caches.match(event.request).then(function (cached) {
+    caches.match(req).then(function (cached) {
       if (cached) return cached;
-      return fetch(event.request)
-        .then(function (res) {
-          if (res && res.status === 200) {
-            var copy = res.clone();
-            caches.open(CACHE_NAME).then(function (cache) { cache.put(event.request, copy); });
-          }
-          return res;
-        })
-        .catch(function () {
-          if (event.request.mode === 'navigate') return caches.match('/index.html');
-        });
+      return fetch(req).catch(function () {
+        if (req.mode === 'navigate') return caches.match('/index.html');
+      });
     })
   );
 });
