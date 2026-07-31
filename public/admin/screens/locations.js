@@ -8,7 +8,7 @@
   // round-trip to fetch.
   var LOCATION_TYPES = ['Cold Room', 'State', 'Axis', 'Access Point'];
 
-  registerScreen('locations', '08', 'Locations', 'locations', initLocations);
+  registerScreen('locations', '07', 'Locations', 'locations', initLocations);
 
   function initLocations(container) {
     container.innerHTML = '<div class="admin-empty">Loading…</div>';

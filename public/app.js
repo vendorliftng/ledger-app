@@ -28,6 +28,19 @@ var LABELS = {
   recon:   ['07','Reconciliation']
 };
 
+/* ── Branding ──────────────────────────────────────────────
+   Pulled from the Settings sheet's 'Business Name' row (an unauthenticated
+   call — nobody's logged in yet at this point), not hardcoded, so pointing
+   this same codebase at a different distributor is a Settings edit, not a
+   code change. Falls back to 'Ledger' if it's blank or unreachable, so a
+   slow/offline first load never shows an empty heading. */
+apiCall('getBranding', null, {}).then(function (res) {
+  if (res && res.ok && res.business) {
+    document.getElementById('brandName').textContent = res.business;
+    document.title = res.business + ' — Ledger';
+  }
+}).catch(function () {});
+
 /* ── Service worker + offline sync plumbing ───────────────── */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {

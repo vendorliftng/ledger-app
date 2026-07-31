@@ -4,7 +4,7 @@
    hidden from Manager (same reasoning as Products' Cost). */
 
 (function () {
-  registerScreen('coldroom', '05', 'Cold Room', 'coldroom', initColdRoom);
+  registerScreen('coldroom', '04', 'Cold Room', 'coldroom', initColdRoom);
 
   function initColdRoom(container) {
     container.innerHTML = '<div class="admin-empty">Loading…</div>';

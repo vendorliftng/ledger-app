@@ -6,7 +6,7 @@
 (function () {
   var ROLES = ['Owner', 'Manager', 'Storekeeper', 'Marketer'];
 
-  registerScreen('users', '09', 'Users', 'users', initUsers);
+  registerScreen('users', '08', 'Users', 'users', initUsers);
 
   function initUsers(container, DATA) {
     container.innerHTML = '<div class="admin-empty">Loading…</div>';

@@ -5,7 +5,7 @@
    shoulder-surfing on a shared office screen). */
 
 (function () {
-  registerScreen('settings', '11', 'Settings', 'settings', initSettings);
+  registerScreen('settings', '10', 'Settings', 'settings', initSettings);
 
   var GROUPS = [
     { title: 'Business', fields: ['Business Name', 'Currency Symbol'] },

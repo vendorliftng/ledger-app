@@ -51,6 +51,13 @@ function loadAdmin() {
     .then(function (d) {
       if (isAuthError(d)) { window.location.href = 'index.html'; return; }
       DATA = d;
+      // Same 'Business Name' Settings row the login screen reads (via
+      // getBranding) — getBootstrap already carries it for any signed-in
+      // role, so no extra call is needed here.
+      if (DATA.settings && DATA.settings.business) {
+        document.getElementById('sidebarBrand').textContent = DATA.settings.business;
+        document.title = DATA.settings.business + ' — Admin';
+      }
       buildSidebar();
       goToAllowedScreen(currentScreenKey());
     })

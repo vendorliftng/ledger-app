@@ -43,6 +43,7 @@ function renderDataTable(container, opts) {
     '</div>' +
     '<div class="table-wrap"><table class="data-table"><thead><tr>' +
       opts.columns.map(function (c) { return '<th data-key="' + c.key + '">' + escapeHtml(c.label) + '</th>'; }).join('') +
+      (opts.onRowClick ? '<th></th>' : '') +
     '</tr></thead><tbody class="dt-body"></tbody></table></div>';
 
   container.appendChild(wrap);
@@ -124,13 +125,23 @@ function renderDataTable(container, opts) {
         var cls = c.type === 'num' ? 'num' : (c.type === 'code' ? 'code' : '');
         return '<td class="' + cls + '">' + display + '</td>';
       }).join('');
+      // The whole row has always been clickable to edit it, but nothing
+      // said so — an explicit button is what actually makes that
+      // discoverable instead of something you have to be told once.
+      if (opts.onRowClick) cells += '<td class="num"><button type="button" class="ghost dt-edit-btn" data-edit-idx="' + i + '">Edit</button></td>';
       var rowCls = (opts.onRowClick ? 'clickable' : '') + (opts.rowClass ? ' ' + opts.rowClass(r) : '');
       return '<tr class="' + rowCls + '" data-id="' + escapeHtml(opts.rowKey ? opts.rowKey(r) : '') + '">' + cells + '</tr>';
-    }).join('') : '<tr><td colspan="' + opts.columns.length + '" class="admin-empty">No matching rows.</td></tr>';
+    }).join('') : '<tr><td colspan="' + (opts.columns.length + (opts.onRowClick ? 1 : 0)) + '" class="admin-empty">No matching rows.</td></tr>';
 
     if (opts.onRowClick) {
       Array.prototype.forEach.call(bodyEl.querySelectorAll('tr[data-id]'), function (tr, i) {
         tr.addEventListener('click', function () { opts.onRowClick(rows[i]); });
+      });
+      Array.prototype.forEach.call(bodyEl.querySelectorAll('.dt-edit-btn'), function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation(); // the row itself is also clickable — don't open the modal twice
+          opts.onRowClick(rows[Number(btn.getAttribute('data-edit-idx'))]);
+        });
       });
     }
 

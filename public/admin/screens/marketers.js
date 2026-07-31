@@ -5,7 +5,7 @@
    regardless of what buttons this screen shows). */
 
 (function () {
-  registerScreen('marketers', '06', 'Marketers', 'marketers', initMarketers);
+  registerScreen('marketers', '05', 'Marketers', 'marketers', initMarketers);
 
   function initMarketers(container) {
     container.innerHTML = '<div class="admin-empty">Loading…</div>';
