@@ -13,7 +13,7 @@ importScripts('db.js', 'outbox.js');
 // Bump this whenever the shell files change meaningfully — it's what forces
 // browsers holding an old, already-installed service worker to fetch fresh
 // copies instead of serving whatever they cached last time.
-var CACHE_NAME = 'ledger-shell-v2';
+var CACHE_NAME = 'ledger-shell-v3';
 var SHELL_FILES = [
   '/index.html',
   '/styles.css',
@@ -59,13 +59,22 @@ self.addEventListener('fetch', function (event) {
   // back into the cache on every request (including full-page navigations)
   // is a known source of hard-to-diagnose failures in some browsers, and
   // isn't needed since the shell is already covered by install-time caching.
+  //
+  // Everything below is wrapped so this can NEVER hand event.respondWith()
+  // a rejected promise — that's what produces a browser-level "site can't
+  // be reached" page instead of an actual response. Whatever goes wrong,
+  // this always resolves to *some* Response.
   event.respondWith(
-    caches.match(req).then(function (cached) {
-      if (cached) return cached;
-      return fetch(req).catch(function () {
-        if (req.mode === 'navigate') return caches.match('/index.html');
-      });
-    })
+    caches.match(req)
+      .then(function (cached) { return cached || fetch(req); })
+      .catch(function () {
+        return caches.match('/index.html').then(function (fallback) {
+          return fallback || new Response(
+            'Ledger is offline and this page was not cached yet — reconnect and try again.',
+            { status: 503, headers: { 'Content-Type': 'text/plain' } }
+          );
+        });
+      })
   );
 });
 
