@@ -13,7 +13,7 @@ importScripts('db.js', 'outbox.js');
 // Bump this whenever the shell files change meaningfully — it's what forces
 // browsers holding an old, already-installed service worker to fetch fresh
 // copies instead of serving whatever they cached last time.
-var CACHE_NAME = 'ledger-shell-v3';
+var CACHE_NAME = 'ledger-shell-v4';
 var SHELL_FILES = [
   '/index.html',
   '/styles.css',

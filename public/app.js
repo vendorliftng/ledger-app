@@ -31,7 +31,21 @@ var LABELS = {
 /* ── Service worker + offline sync plumbing ───────────────── */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('/sw.js').catch(function () {});
+    navigator.serviceWorker.register('/sw.js').then(function (reg) {
+      // Chrome only auto-checks a registered worker for updates once every
+      // ~24h. That's exactly why a fixed bug can still visibly recur on a
+      // phone that logged in yesterday — the browser hasn't looked for the
+      // new sw.js yet. update() is an explicit request and isn't subject to
+      // that throttle, so it runs every time this page loads instead.
+      reg.update().catch(function () {});
+    }).catch(function () {});
+  });
+  // Once a newly-installed worker actually takes over, this page's own
+  // in-memory state was still built by whatever code ran before the
+  // update — reload once so everything (including this file) is running
+  // fresh, rather than leaving a half-old, half-new page active.
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    window.location.reload();
   });
 }
 

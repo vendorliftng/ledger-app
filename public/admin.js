@@ -8,6 +8,22 @@ if (!TOKEN || !USER || USER.role === 'Marketer') {
   window.location.href = 'index.html';
 }
 
+// The service worker exists for the mobile app's offline field capture
+// (registered in app.js) — admin is a desk tool with no offline need. But
+// a service worker's scope is the whole origin, so one registered earlier
+// from a mobile-app visit on this same browser/device silently ends up
+// "in charge" of this page too, including the Sign out navigation below.
+// That mismatch — this page never asked for it, has no way to know its
+// version, and can't be sure it's the latest build — is what's actually
+// behind "sign out goes to a broken page": get rid of it here so every
+// request this page makes, sign-out included, always goes straight to the
+// network instead of through code this page has no visibility into.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function (regs) {
+    regs.forEach(function (r) { r.unregister(); });
+  }).catch(function () {});
+}
+
 document.getElementById('aName').textContent = USER ? USER.name : '';
 document.getElementById('aRole').textContent = USER ? USER.role.toUpperCase() : '';
 document.getElementById('screenDate').textContent =
