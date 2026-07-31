@@ -123,6 +123,12 @@ body { padding-bottom: 0; } /* undo the mobile app's fixed-toast bottom padding 
 
 .tab-btn.tab-btn-active { background: var(--chill); color: #fff; border-color: var(--chill); }
 
+/* Record Entry screen — reuses the mobile app's own .card/label/input rules
+   (loaded from styles.css) rather than the desk-density modal ones, since
+   these are the same big, unmissable forms a Storekeeper uses on the mobile
+   app, just also reachable from a desk. */
+.capture-wrap { max-width: 640px; }
+
 .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 .toolbar input[type="search"], .toolbar select {
   width: auto; min-height: var(--row-h); padding: 0 12px; font-family: var(--data); font-size: 13.5px;
@@ -147,6 +153,10 @@ table.data-table tbody td { padding: 10px 14px; border-bottom: 1px solid var(--r
 table.data-table tbody tr:nth-child(even) { background: var(--table-row-alt); }
 table.data-table tbody tr:hover { background: var(--table-row-hover); }
 table.data-table tbody tr.clickable { cursor: pointer; }
+/* A row with at least one Audit Log entry — same amber family as .badge.warn,
+   so "this one's been changed" reads at a glance without opening a modal. */
+table.data-table tbody tr.row-edited { background: #FBF0DD; }
+table.data-table tbody tr.row-edited:hover { background: #F7E6C4; }
 table.data-table td.num, table.data-table td.code { font-family: var(--data); }
 table.data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
 

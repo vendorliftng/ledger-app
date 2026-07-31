@@ -10,11 +10,12 @@
      onRowClick?(row),
      onAdd?(), addLabel?: 'Add marketer',
      csvFilename?: 'marketers.csv',
-     onToggleActive?(row, buttonEl)  // if set, the 'active' column becomes a
+     onToggleActive?(row, buttonEl), // if set, the 'active' column becomes a
                                       // one-click Active/Inactive button —
                                       // matches how a checkbox column feels
                                       // on the Sheet, no modal needed just to
                                       // flip a status
+     rowClass?(row) -> string        // extra class(es) on that row's <tr>
    })
 */
 
@@ -123,7 +124,8 @@ function renderDataTable(container, opts) {
         var cls = c.type === 'num' ? 'num' : (c.type === 'code' ? 'code' : '');
         return '<td class="' + cls + '">' + display + '</td>';
       }).join('');
-      return '<tr class="' + (opts.onRowClick ? 'clickable' : '') + '" data-id="' + escapeHtml(opts.rowKey ? opts.rowKey(r) : '') + '">' + cells + '</tr>';
+      var rowCls = (opts.onRowClick ? 'clickable' : '') + (opts.rowClass ? ' ' + opts.rowClass(r) : '');
+      return '<tr class="' + rowCls + '" data-id="' + escapeHtml(opts.rowKey ? opts.rowKey(r) : '') + '">' + cells + '</tr>';
     }).join('') : '<tr><td colspan="' + opts.columns.length + '" class="admin-empty">No matching rows.</td></tr>';
 
     if (opts.onRowClick) {

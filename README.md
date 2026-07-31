@@ -38,9 +38,17 @@ npx wrangler dev
 
 ## Status
 
-Phase 3 of the migration plan: the real screens are in — login, the
-dashboard, and all six field-capture forms (Stock In, Load Out, Sale,
-Return, Cash, Crates) plus Reconciliation, all talking to `/api` instead of
-`google.script.run`. Still to come: the three screens that don't exist yet
-anywhere (edit history, audit log, user management), then the PWA/offline
-work (Phases 4–5).
+Full build, both fronts:
+
+- **Mobile app** (`index.html`, Marketer only) — the six field-capture forms
+  plus Reconciliation, installable as a PWA, works offline (IndexedDB outbox
+  + Background Sync, with a foreground fallback for iOS).
+- **Admin dashboard** (`admin.html`, Owner/Manager/Storekeeper) — Overview
+  with trend charts, Record Entry (the same six forms, for desk use),
+  Records (browse/edit, with edited rows flagged), Reconciliation history,
+  Cold Room stock, Marketers/Products/Locations/Users management, Audit Log,
+  Settings. Responsive down to phone width.
+
+Both talk to `/api` → the Apps Script backend, never `google.script.run`.
+Custom domain and moving off Google Sheets are both open, deliberately
+deferred future phases — not urgent at current scale.

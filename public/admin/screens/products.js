@@ -6,7 +6,7 @@
    than showing an always-blank one. */
 
 (function () {
-  registerScreen('products', '06', 'Products', 'products', initProducts);
+  registerScreen('products', '07', 'Products', 'products', initProducts);
 
   function initProducts(container) {
     container.innerHTML = '<div class="admin-empty">Loading…</div>';

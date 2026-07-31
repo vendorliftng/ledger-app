@@ -75,7 +75,7 @@
     }
   };
 
-  registerScreen('records', '02', 'Records', 'history', initRecords);
+  registerScreen('records', '03', 'Records', 'history', initRecords);
 
   function initRecords(container) {
     var state = { tab: TABS[0] };
@@ -121,6 +121,13 @@
       var isNum = /Quantity|Amount|Price|Cost|Crates/.test(key);
       return { key: key, label: key, type: isNum ? 'num' : 'text' };
     });
+    // Edited is a flag getRecentRecords_ computes from the Audit Log, not a
+    // real sheet column — surfaced as its own badge column so a change is
+    // visible right on the row, not just buried in the separate Audit Log
+    // screen (which Storekeeper/Marketer can't even open).
+    columns.push({ key: 'Edited', label: 'Edited', render: function (v) {
+      return v ? '<span class="badge warn">Edited</span>' : '';
+    } });
 
     renderDataTable(body, {
       columns: columns,
@@ -128,7 +135,8 @@
       rowKey: function (r) { return r[cfg.idField]; },
       searchable: cfg.searchable,
       csvFilename: state.tab.toLowerCase().replace(/\s+/g, '-') + '-records.csv',
-      onRowClick: function (r) { openEditModal(container, state, cfg, r); }
+      onRowClick: function (r) { openEditModal(container, state, cfg, r); },
+      rowClass: function (r) { return r.Edited ? 'row-edited' : ''; }
     });
   }
 

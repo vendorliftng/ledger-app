@@ -4,7 +4,7 @@
    check here. */
 
 (function () {
-  registerScreen('auditlog', '09', 'Audit Log', 'auditlog', initAuditLog);
+  registerScreen('auditlog', '10', 'Audit Log', 'auditlog', initAuditLog);
 
   function initAuditLog(container) {
     container.innerHTML = '<div class="admin-empty">Loading…</div>';

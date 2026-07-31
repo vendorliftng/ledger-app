@@ -4,7 +4,7 @@
    ROLE_ACTIONS, so this screen is never even offered to them. */
 
 (function () {
-  registerScreen('recon', '03', 'Reconciliation', 'recon', initRecon);
+  registerScreen('recon', '04', 'Reconciliation', 'recon', initRecon);
 
   function initRecon(container, DATA) {
     var rows = (DATA.summary && DATA.summary.recon) || [];
