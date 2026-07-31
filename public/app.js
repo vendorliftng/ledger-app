@@ -1,7 +1,16 @@
 /* Ledger — mobile field app (Marketer role).
-   Talks to /api via shared.js's apiCall() — load shared.js before this file.
-   Owner/Manager/Storekeeper never see this screen; they're sent to
-   admin.html instead (see doLogin() and the already-signed-in check below). */
+   Talks to /api via shared.js's apiCall() — load shared.js, db.js and
+   outbox.js before this file. Owner/Manager/Storekeeper never see this
+   screen; they're sent to admin.html instead (see doLogin() and the
+   already-signed-in check below).
+
+   Offline: getBootstrap's reference data (products/locations/marketers/
+   batches) is cached in IndexedDB so forms still populate with no signal.
+   The six submit* actions queue in IndexedDB and send themselves via
+   outbox.js — immediately if online, via Background Sync (Android) or the
+   foreground online/visibility fallback below (iOS, and as a safety net
+   everywhere) once reconnected. login/getBootstrap/saveReconciliation need
+   a live connection and are not queued. */
 
 var DATA = null;
 
@@ -18,6 +27,41 @@ var LABELS = {
   crates:  ['06','Crates'],
   recon:   ['07','Reconciliation']
 };
+
+/* ── Service worker + offline sync plumbing ───────────────── */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/sw.js').catch(function () {});
+  });
+}
+
+function registerBackgroundSyncIfAvailable() {
+  if ('serviceWorker' in navigator && 'SyncManager' in window) {
+    navigator.serviceWorker.ready.then(function (reg) {
+      return reg.sync.register('ledger-outbox-sync');
+    }).catch(function () {}); // best-effort — the foreground fallback below covers the rest
+  }
+}
+
+// iOS Safari has no Background Sync, so this foreground fallback is the
+// real mechanism there — and it's a useful safety net on Android too.
+window.addEventListener('online', function () { drainOutbox().then(refreshPendingCount); });
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible' && navigator.onLine) drainOutbox().then(refreshPendingCount);
+});
+setInterval(function () {
+  if (navigator.onLine) drainOutbox().then(refreshPendingCount);
+}, 60000);
+
+function refreshPendingCount() {
+  var el = document.getElementById('pendingPill');
+  if (!el) return;
+  outboxAll().then(function (items) {
+    if (!items.length) { el.style.display = 'none'; return; }
+    el.style.display = 'inline-flex';
+    el.textContent = items.length + (items.length === 1 ? ' entry' : ' entries') + ' waiting to send';
+  }).catch(function () {});
+}
 
 /* ── Login ─────────────────────────────────────────────── */
 document.getElementById('loginBtn').onclick = doLogin;
@@ -42,6 +86,8 @@ function doLogin() {
       if (!res.ok) { showErr(res.message); return; }
       setSession(res.token, res.user);
       if (USER.role !== 'Marketer') { window.location.href = 'admin.html'; return; }
+      // Anything that was stuck waiting for a fresh login gets retried now.
+      retryOutboxWithToken(TOKEN).then(refreshPendingCount);
       showApp();
       loadData();
     })
@@ -75,12 +121,41 @@ function loadData() {
     .then(function (d) {
       if (isAuthError(d)) { toast(d.message, true); doLogout(); return; }
       DATA = d;
+      saveReferenceData(d).catch(function () {});
+      hideOfflineBanner();
       renderTiles();
-      renderSummary();
+      renderSummary(); // also refreshes the pending-count pill
       fillSelects();
       setToday();
     })
-    .catch(function () { toast('Could not load data. Check your connection and retry.', true); });
+    .catch(function () {
+      loadReferenceData().then(function (cached) {
+        if (!cached) { toast('Could not load data. Check your connection and retry.', true); return; }
+        DATA = cached.data;
+        showOfflineBanner(cached.savedAt);
+        renderTiles();
+        renderSummary();
+        fillSelects();
+        setToday();
+      }).catch(function () {
+        toast('Could not load data. Check your connection and retry.', true);
+      });
+    });
+}
+
+function showOfflineBanner(savedAt) {
+  var el = document.getElementById('offlineBanner');
+  if (!el) return;
+  var when = savedAt
+    ? new Date(savedAt).toLocaleString(undefined, { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })
+    : 'earlier';
+  el.textContent = 'Offline — showing data saved at ' + when;
+  el.style.display = 'block';
+}
+
+function hideOfflineBanner() {
+  var el = document.getElementById('offlineBanner');
+  if (el) el.style.display = 'none';
 }
 
 function renderTiles() {
@@ -103,10 +178,12 @@ function renderSummary() {
     new Date().toLocaleDateString(undefined, { weekday:'long', day:'numeric', month:'long' });
 
   var flagged = (s.recon || []).filter(function (r) { return r.status === 'FLAGGED'; });
-  document.getElementById('reconHome').innerHTML = flagged.length
-    ? '<div class="eyebrow" style="margin:24px 0 8px">Needs attention</div>' +
-      flagged.map(gauge).join('')
-    : '';
+  document.getElementById('reconHome').innerHTML =
+    (flagged.length
+      ? '<div class="eyebrow" style="margin:24px 0 8px">Needs attention</div>' + flagged.map(gauge).join('')
+      : '') +
+    '<span class="pending-pill" id="pendingPill" style="display:none"></span>';
+  refreshPendingCount();
 }
 
 /* ── Navigation ────────────────────────────────────────── */
@@ -123,9 +200,16 @@ function refresh() {
   apiCall('getBootstrap', TOKEN, {})
     .then(function (d) {
       if (isAuthError(d)) { toast(d.message, true); doLogout(); return; }
-      DATA = d; renderSummary();
+      DATA = d;
+      saveReferenceData(d).catch(function () {});
+      hideOfflineBanner();
+      renderSummary();
     })
-    .catch(function () { toast('Could not refresh — check your connection.', true); });
+    .catch(function () {
+      // Already on cached data, or the user is just mid-session offline —
+      // don't nag on every silent refresh, the banner already said so once.
+      refreshPendingCount();
+    });
 }
 
 function renderRecon() {
@@ -136,6 +220,10 @@ function renderRecon() {
 }
 
 function doSaveRecon() {
+  if (!navigator.onLine) {
+    toast('Reconciliation needs a connection — try again once you have signal.', true);
+    return;
+  }
   setBusy('saveRecon', true, 'Saving…');
   apiCall('saveReconciliation', TOKEN, {})
     .then(function (res) {
@@ -261,22 +349,32 @@ function err(msg) { toast(msg, true); return null; }
 function submit(fn, collector) {
   var payload = collector();
   if (!payload) return;
-  payload.clientRef = uuid(); // protects against a double-tap or a retried request creating a duplicate
+  payload.clientRef = uuid(); // lets a retried/duplicated send be recognised and skipped, online or off
   var btn = event.target;
   var original = btn.textContent;
   btn.disabled = true; btn.textContent = 'Saving…';
 
-  apiCall(fn, TOKEN, payload)
-    .then(function (res) {
-      btn.disabled = false; btn.textContent = original;
-      if (isAuthError(res)) { toast(res.message, true); doLogout(); return; }
-      toast(res.message, !res.ok);
-      if (res.ok) { clearForm(btn); refresh(); }
-    })
-    .catch(function () {
-      btn.disabled = false; btn.textContent = original;
-      toast('Not saved — no connection. Try again when you have signal.', true);
-    });
+  enqueueSubmission(fn, payload, TOKEN).then(function (result) {
+    btn.disabled = false; btn.textContent = original;
+    refreshPendingCount();
+
+    if (result.sent) {
+      toast(result.message || 'Saved.', false);
+      clearForm(btn);
+      refresh();
+    } else if (result.reason === 'offline') {
+      toast('Queued — will send on its own once you have signal.', 'warn');
+      clearForm(btn);
+      registerBackgroundSyncIfAvailable();
+    } else if (result.reason === 'auth') {
+      toast('Saved on this phone — sign in again to send it to the office.', 'warn');
+      clearForm(btn);
+    } else {
+      // A definitive rejection (a real business-rule error) — don't clear
+      // the form, so the mistake can be fixed and resubmitted.
+      toast(result.message || 'Could not save.', true);
+    }
+  });
 }
 
 function clearForm(btn) {
@@ -295,4 +393,3 @@ function setBusy(id, busy, text) {
   if (!b) return;
   b.disabled = busy; b.textContent = text;
 }
-

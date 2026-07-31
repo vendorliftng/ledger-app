@@ -33,12 +33,14 @@ function isAuthError(res) {
 }
 
 var toastTimer;
-function toast(msg, bad) {
+/** kind: true/'bad' = error, 'warn' = queued/deferred (not an error), falsy = success. */
+function toast(msg, kind) {
   var t = document.getElementById('toast');
+  var cls = kind === 'warn' ? 'warn' : (kind ? 'bad' : '');
   t.textContent = msg;
-  t.className = 'toast up' + (bad ? ' bad' : '');
+  t.className = 'toast up' + (cls ? ' ' + cls : '');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(function () { t.className = 'toast' + (bad ? ' bad' : ''); }, 3800);
+  toastTimer = setTimeout(function () { t.className = 'toast' + (cls ? ' ' + cls : ''); }, 3800);
 }
 
 /** Basic HTML-escaping for interpolating user-entered text into markup. */

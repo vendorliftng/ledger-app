@@ -6,6 +6,9 @@
 <meta name="theme-color" content="#0A6E7E">
 <title>Ledger</title>
 <link rel="stylesheet" href="styles.css">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
 </head>
 <body>
 
@@ -27,6 +30,8 @@
       <button class="signout" onclick="doLogout()">Sign out</button>
     </div>
   </div>
+
+  <div id="offlineBanner" class="offline-banner" style="display:none"></div>
 
   <div class="wrap">
 
@@ -164,6 +169,8 @@
 <div id="toast" class="toast"></div>
 
 <script src="shared.js"></script>
+<script src="db.js"></script>
+<script src="outbox.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
