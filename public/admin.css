@@ -163,10 +163,15 @@ table.data-table td.num { text-align: right; font-variant-numeric: tabular-nums;
 .modal-actions button { margin-top: 0; }
 .field-error { font-family: var(--data); font-size: 12.5px; color: var(--short); margin-top: 4px; min-height: 16px; }
 
-@media (max-width: 1279px) {
-  .admin-content::before {
-    content: 'This screen works best at a wider window (desktop/laptop).';
-    display: block; font-family: var(--data); font-size: 13px; color: var(--signal);
-    background: #FBF0DD; padding: 10px 14px; border-radius: 4px; margin-bottom: 16px;
-  }
+/* The generic input/select/textarea rule (styles.css) sets appearance:none,
+   which on a checkbox strips the native box+checkmark with no replacement —
+   it still works, it's just invisible either way. Give checkboxes back a
+   normal, clearly-visible look. */
+input[type="checkbox"] {
+  appearance: auto;
+  width: 18px;
+  height: 18px;
+  min-height: auto;
+  padding: 0;
+  accent-color: var(--chill);
 }
