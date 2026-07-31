@@ -1,0 +1,172 @@
+/* ─────────────────────────────────────────────────────────────
+   LEDGER ADMIN — same instrument-panel identity as the mobile app
+   (frost/ice/chill palette, Barlow Condensed + IBM Plex Mono,
+   monospace for codes/quantities), restructured for a desk, not a
+   cold room: sidebar, top bar, data-dense tables. Desktop/laptop
+   only (~1280px+) — phones are the mobile app's job by design.
+   Loads after styles.css and reuses its :root tokens verbatim.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --sidebar-w: 248px;
+  --topbar-h: 60px;
+  --content-max: 1440px;
+  --admin-pad: 24px;
+  --card-gap: 16px;
+  --row-h: 44px; /* desktop density, vs mobile's --tap:56px */
+
+  --sidebar-bg: var(--ink);
+  --sidebar-text: #9DB3BE;    /* == mobile .topbar .who color — same product, same voice */
+  --sidebar-text-active: #FFFFFF;
+  --sidebar-active-bg: var(--chill);
+
+  --surface: #F7FAFB;
+  --table-header-bg: #ECEFF1;
+  --table-row-hover: #F3F7F8;
+  --table-row-alt: #FAFCFD;
+}
+
+html, body { height: 100%; }
+body { padding-bottom: 0; } /* undo the mobile app's fixed-toast bottom padding */
+
+.admin-shell { display: flex; min-height: 100vh; background: var(--surface); }
+
+/* ── Sidebar ─────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  background: var(--sidebar-bg); color: var(--sidebar-text);
+  display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100vh;
+}
+.sidebar-brand {
+  font-family: var(--display); font-size: 20px; font-weight: 700;
+  letter-spacing: .16em; text-transform: uppercase; color: #fff;
+  padding: 20px var(--pad) 16px;
+}
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 6px 10px; }
+.sidebar-nav a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px; border-radius: 4px; margin-bottom: 2px;
+  text-decoration: none; color: var(--sidebar-text);
+  transition: background .1s ease, color .1s ease;
+}
+.sidebar-nav a:hover { background: rgba(255,255,255,.06); color: #fff; }
+.sidebar-nav a.active { background: var(--sidebar-active-bg); color: #fff; }
+.sidebar-nav a .code {
+  font-family: var(--data); font-size: 11px; opacity: .75;
+  min-width: 20px;
+}
+.sidebar-nav a .label {
+  font-family: var(--display); font-size: 14px; font-weight: 600;
+  letter-spacing: .03em; text-transform: uppercase;
+}
+.sidebar-foot { padding: 14px var(--pad) 18px; border-top: 1px solid rgba(255,255,255,.1); }
+.sidebar-user .name { font-family: var(--data); font-size: 13px; color: #fff; }
+.sidebar-user .role { font-family: var(--data); font-size: 11px; letter-spacing: .08em; color: var(--sidebar-text); margin-top: 2px; }
+.sidebar-signout {
+  width: auto; min-height: auto; background: none; border: none; padding: 0;
+  margin-top: 10px; color: #7F98A5; font-family: var(--data); font-size: 11px;
+  letter-spacing: .05em; text-transform: uppercase; text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ── Main column ─────────────────────────────────────────── */
+.admin-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.admin-topbar {
+  height: var(--topbar-h); flex-shrink: 0;
+  background: var(--ice); border-bottom: 1px solid var(--rule);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--admin-pad); position: sticky; top: 0; z-index: 10;
+}
+.admin-topbar h1 { font-size: 20px; }
+.topbar-date { font-family: var(--data); font-size: 12.5px; color: var(--steel); }
+
+.admin-content {
+  flex: 1; padding: var(--admin-pad); max-width: var(--content-max); width: 100%;
+  margin: 0 auto; box-sizing: border-box;
+}
+
+.admin-empty { font-family: var(--data); font-size: 14px; color: var(--steel); padding: 24px 0; }
+.admin-error {
+  font-family: var(--data); font-size: 14px; color: var(--short);
+  background: #FBE9E7; border-radius: 4px; padding: 14px 16px;
+}
+
+/* ── KPI row (reuses .stat from styles.css, just laid out wider) ── */
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--card-gap); margin-bottom: 8px; }
+.kpi-row .stat { margin-bottom: 0; }
+.kpi-row .stat .v { font-size: 28px; }
+
+.gauge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: var(--card-gap); }
+.gauge-grid .gauge { margin-bottom: 0; }
+
+.chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: var(--card-gap); }
+.chart-card { background: var(--ice); border: 1px solid var(--rule); border-radius: 4px; padding: 16px 18px; }
+.chart-title { font-family: var(--display); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--steel); margin-bottom: 10px; }
+
+/* ── Section chrome shared by every admin screen ─────────── */
+.screen-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
+.screen-head .actions { display: flex; gap: 10px; }
+.screen-head button, .toolbar button { width: auto; min-height: var(--row-h); margin-top: 0; padding: 0 16px; font-size: 14px; }
+
+.tab-btn.tab-btn-active { background: var(--chill); color: #fff; border-color: var(--chill); }
+
+.toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.toolbar input[type="search"], .toolbar select {
+  width: auto; min-height: var(--row-h); padding: 0 12px; font-family: var(--data); font-size: 13.5px;
+  background: var(--ice); border: 1.5px solid var(--rule); border-radius: 3px; color: var(--ink);
+}
+.toolbar input[type="search"] { min-width: 220px; }
+.toolbar .spacer { flex: 1; }
+.toolbar .count { font-family: var(--data); font-size: 12.5px; color: var(--steel); }
+
+/* ── Data table ──────────────────────────────────────────── */
+.table-wrap { background: var(--ice); border: 1px solid var(--rule); border-radius: 4px; overflow: auto; }
+table.data-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table.data-table thead th {
+  background: var(--table-header-bg); font-family: var(--display); font-weight: 700;
+  font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--steel);
+  text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--rule);
+  white-space: nowrap; cursor: pointer; user-select: none;
+}
+table.data-table thead th.sort-asc::after { content: ' \2191'; }
+table.data-table thead th.sort-desc::after { content: ' \2193'; }
+table.data-table tbody td { padding: 10px 14px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+table.data-table tbody tr:nth-child(even) { background: var(--table-row-alt); }
+table.data-table tbody tr:hover { background: var(--table-row-hover); }
+table.data-table tbody tr.clickable { cursor: pointer; }
+table.data-table td.num, table.data-table td.code { font-family: var(--data); }
+table.data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.badge {
+  display: inline-block; font-family: var(--data); font-size: 11px; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase; padding: 3px 9px; border-radius: 99px;
+}
+.badge.ok    { background: #E5F4EC; color: var(--clear); }
+.badge.bad   { background: #FBE9E7; color: var(--short); }
+.badge.warn  { background: #FBF0DD; color: var(--signal); }
+.badge.muted { background: var(--rule); color: var(--steel); }
+
+/* ── Modal (add/edit forms) ─────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(12,26,33,.6);
+  display: flex; align-items: center; justify-content: center; z-index: 100; padding: 24px;
+}
+.modal-panel {
+  background: var(--ice); border-radius: 6px; width: 100%; max-width: 520px;
+  max-height: calc(100vh - 48px); overflow-y: auto; padding: 26px 28px;
+}
+.modal-panel h2 { margin-bottom: 18px; }
+.modal-panel label { margin: 12px 0 6px; }
+.modal-panel input, .modal-panel select, .modal-panel textarea { min-height: var(--row-h); font-size: 15px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 22px; }
+.modal-actions button { margin-top: 0; }
+.field-error { font-family: var(--data); font-size: 12.5px; color: var(--short); margin-top: 4px; min-height: 16px; }
+
+@media (max-width: 1279px) {
+  .admin-content::before {
+    content: 'This screen works best at a wider window (desktop/laptop).';
+    display: block; font-family: var(--data); font-size: 13px; color: var(--signal);
+    background: #FBF0DD; padding: 10px 14px; border-radius: 4px; margin-bottom: 16px;
+  }
+}

@@ -1,11 +1,8 @@
-/* Ledger — frontend logic.
-   Talks to /api (a Cloudflare Worker route that proxies to the Apps Script
-   backend) instead of google.script.run — this app is no longer served
-   from inside Apps Script's own sandbox, so that's no longer available. */
+/* Ledger — mobile field app (Marketer role).
+   Talks to /api via shared.js's apiCall() — load shared.js before this file.
+   Owner/Manager/Storekeeper never see this screen; they're sent to
+   admin.html instead (see doLogin() and the already-signed-in check below). */
 
-var TOKEN = localStorage.getItem('ledger_token') || null;
-var USER = null;
-try { USER = JSON.parse(localStorage.getItem('ledger_user') || 'null'); } catch (e) { USER = null; }
 var DATA = null;
 
 /* Labels for the tiles this build knows how to render. Server also returns
@@ -22,33 +19,17 @@ var LABELS = {
   recon:   ['07','Reconciliation']
 };
 
-/* ── API ───────────────────────────────────────────────── */
-function apiCall(fn, token, payload) {
-  return fetch('/api', {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ fn: fn, token: token, payload: payload || {} })
-  }).then(function (res) { return res.json(); });
-}
-
-function uuid() {
-  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
-
 /* ── Login ─────────────────────────────────────────────── */
 document.getElementById('loginBtn').onclick = doLogin;
 document.getElementById('pin').addEventListener('keydown', function (e) {
   if (e.key === 'Enter') doLogin();
 });
 
-// Already signed in from a previous visit — skip straight to the app.
+// Already signed in from a previous visit — Marketer goes straight to the
+// mobile app, everyone else belongs on the admin dashboard instead.
 if (TOKEN && USER) {
-  showApp();
-  loadData();
+  if (USER.role !== 'Marketer') { window.location.href = 'admin.html'; }
+  else { showApp(); loadData(); }
 }
 
 function doLogin() {
@@ -59,9 +40,8 @@ function doLogin() {
     .then(function (res) {
       setBusy('loginBtn', false, 'Sign in');
       if (!res.ok) { showErr(res.message); return; }
-      TOKEN = res.token; USER = res.user;
-      localStorage.setItem('ledger_token', TOKEN);
-      localStorage.setItem('ledger_user', JSON.stringify(USER));
+      setSession(res.token, res.user);
+      if (USER.role !== 'Marketer') { window.location.href = 'admin.html'; return; }
       showApp();
       loadData();
     })
@@ -79,10 +59,8 @@ function showApp() {
 }
 
 function doLogout() {
-  if (TOKEN) apiCall('logout', TOKEN, {}).catch(function () {});
-  TOKEN = null; USER = null; DATA = null;
-  localStorage.removeItem('ledger_token');
-  localStorage.removeItem('ledger_user');
+  clearSession();
+  DATA = null;
   document.getElementById('app').style.display = 'none';
   document.getElementById('login').style.display = 'flex';
   document.getElementById('pin').value = '';
@@ -90,11 +68,6 @@ function doLogout() {
 }
 
 function showErr(msg) { document.getElementById('loginErr').textContent = msg; }
-
-/** A session-related rejection (expired/invalid token) — send back to login. */
-function isAuthError(res) {
-  return res && res.ok === false && /session|signed in/i.test(res.message || '');
-}
 
 /* ── Bootstrap ─────────────────────────────────────────── */
 function loadData() {
@@ -134,32 +107,6 @@ function renderSummary() {
     ? '<div class="eyebrow" style="margin:24px 0 8px">Needs attention</div>' +
       flagged.map(gauge).join('')
     : '';
-}
-
-/* ── SIGNATURE: the variance gauge ─────────────────────── */
-function gauge(r) {
-  var flag = r.status === 'FLAGGED';
-  var gapUnits = r.stockVariance;
-  var gapCash  = r.cashVariance;
-  var headline = gapUnits !== 0 ? (gapUnits > 0 ? '−' + gapUnits : '+' + Math.abs(gapUnits)) : '0';
-
-  return '<div class="gauge ' + (flag ? 'flag' : '') + '">' +
-    '<div class="band"><span class="nm">' + r.marketer + '</span>' +
-      '<span class="st">' + (flag ? 'UNACCOUNTED' : 'RECONCILED') + '</span></div>' +
-    '<div class="readout">' +
-      '<div class="flow">' +
-        '<div><div class="k">Issued</div><div class="v">' + r.issued + '</div></div>' +
-        '<div><div class="k">Sold</div><div class="v">' + r.sold + '</div></div>' +
-        '<div><div class="k">Returned</div><div class="v">' + r.returned + '</div></div>' +
-      '</div>' +
-      '<div class="gap">' +
-        '<div class="k">Units</div>' +
-        '<div class="v">' + headline + '</div>' +
-        '<div class="sub">' + (gapCash !== 0 ? 'cash ' + money(Math.abs(gapCash)) + (gapCash > 0 ? ' short' : ' over') : 'cash clear') + '</div>' +
-      '</div>' +
-    '</div>' +
-    '<div class="ticks"></div>' +
-  '</div>';
 }
 
 /* ── Navigation ────────────────────────────────────────── */
@@ -343,21 +290,9 @@ function clearForm(btn) {
 }
 
 /* ── Utils ─────────────────────────────────────────────── */
-function money(n) {
-  return (Number(n) || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
-}
-
 function setBusy(id, busy, text) {
   var b = document.getElementById(id);
   if (!b) return;
   b.disabled = busy; b.textContent = text;
 }
 
-var toastTimer;
-function toast(msg, bad) {
-  var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast up' + (bad ? ' bad' : '');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(function () { t.className = 'toast' + (bad ? ' bad' : ''); }, 3800);
-}

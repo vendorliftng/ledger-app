@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0C1A21">
+<title>Ledger — Admin</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div class="admin-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">Ledger</div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-foot">
+      <div class="sidebar-user">
+        <div class="name" id="aName"></div>
+        <div class="role" id="aRole"></div>
+      </div>
+      <button class="sidebar-signout" onclick="doAdminLogout()">Sign out</button>
+    </div>
+  </aside>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <h1 id="screenTitle">Overview</h1>
+      <div class="topbar-date" id="screenDate"></div>
+    </header>
+    <main class="admin-content" id="content"></main>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="shared.js"></script>
+<script src="admin/router.js"></script>
+<script src="admin/datatable.js"></script>
+<script src="admin/modal.js"></script>
+<script src="admin/charts.js"></script>
+<script src="admin/screens/overview.js"></script>
+<script src="admin/screens/marketers.js"></script>
+<script src="admin/screens/products.js"></script>
+<script src="admin/screens/locations.js"></script>
+<script src="admin/screens/users.js"></script>
+<script src="admin/screens/coldroom.js"></script>
+<script src="admin/screens/records.js"></script>
+<script src="admin/screens/auditlog.js"></script>
+<script src="admin/screens/reconciliation.js"></script>
+<script src="admin/screens/settings.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
